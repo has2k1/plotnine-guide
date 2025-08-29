@@ -29,6 +29,7 @@ This page will cover the basics of specifying mappings and how they interact wit
 ## Setup
 
 ```{python}
+import numpy as np
 from plotnine import *
 from plotnine.data import penguins
 ```
@@ -162,20 +163,46 @@ Mappings attributes like `color` will automatically group data points for collec
 
 ### Working around grouping
 
-To avoid automatically splitting data into groups, try setting aesthetics like `color` or `fill` at the individual geom level.
+There are two reasons why you may want to work around the automatic grouping.
 
-For example, the plot below colors points by `species`, but with only a single trend line.
+1. _Opting In_ - To limit the scope the grouping to some of the layers.
+   You do this by mapping the discrete variable to aesthetics like `color` or `fill` at the individual geom level.
 
-```{python}
-(
-    ggplot(
-        penguins,
-        aes(x="flipper_length_mm", y="body_mass_g"),
-    )
-    + geom_point(aes(color="species"))
-    + geom_smooth(method="lm")
-)
-```
+
+   ```{python}
+   (
+       ggplot(
+           penguins,
+           aes(x="flipper_length_mm", y="body_mass_g"),
+       )
+       + geom_point(aes(color="species"))
+       + geom_smooth(method="lm")
+   )
+   ```
+
+2. _Opting Out_ - To override the grouping that is triggered by the global aesthetics.
+   In most cases, you will run into this when you have groups that have one point yet you need a connecting line.
+
+   ```{python}
+   #| warning: true
+   (
+       ggplot(penguins, aes(x="species", y="flipper_length_mm"))
+       + geom_point(stat="summary", fun_y=np.mean)
+       + geom_path(stat="summary", fun_y=np.mean)
+   )
+   ```
+   
+   The solution is to set the `group` in the line drawing layer to a constant.
+
+   ```{python}
+   (
+       ggplot(penguins, aes(x="species", y="flipper_length_mm"))
+       + geom_point(stat="summary", fun_y=np.mean)
+       + geom_path(stat="summary", fun_y=np.mean, group=1)
+   )
+   ```
+
+   Note that, for this particular case you should ignore the warning if the plot is what you expect it to be.
 
 ## Mappings allow expressions
 
